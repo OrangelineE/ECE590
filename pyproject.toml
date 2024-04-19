@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "smart-pillbox"
+version = "1.2023.0"
+authors = ["Jing Wang <jw844@duke.edu>"]
+description = "ECE 590 Final Project"
+package-mode = false
+[tool.poetry.dependencies]
+python = "^3.8.10"
+flask = "2.3.3"
+werkzeug = "2.3.7"
+flask-sqlalchemy = "^3.0.5"
+flask-wtf = "^1.1.1"
+psycopg2-binary = "^2.9.7"
+flask-login = "^0.6.2"
+email-validator = "^2.0.0.post2"
+faker = "^19.3.1"
+python-dotenv = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

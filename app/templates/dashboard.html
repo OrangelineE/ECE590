@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard{% endblock %}
+
+{% block hero %}
+    <h1>Welcome, {{ current_user.name }}</h1>
+    <p>Manage your medication efficiently and effectively.</p>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <!-- User Details Panel -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Account Details
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Email: {{ current_user.email }}</li>
+                    <li class="list-group-item">Name: {{ current_user.name }}</li>
+                    <li class="list-group-item">Age: {{ current_user.age }}</li>
+                    <!-- Other user details -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Medication Slots Panel -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Medication Slots
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for slot in current_user.slots %}
+                    <li class="list-group-item">{{ slot.name }} at {{ slot.time }}</li>
+                    {% else %}
+                    <li class="list-group-item">No slots configured</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Reminders Panel -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Upcoming Reminders
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for reminder in current_user.reminders %}
+                    <li class="list-group-item">
+                        {{ reminder.message }} on {{ reminder.date }}
+                    </li>
+                    {% else %}
+                    <li class="list-group-item">No reminders set</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid h-100">
+  <div class="row h-100 justify-content-center align-items-center">
+    <div class="col-14 col-md-10 col-lg-10">
+          <div class="card shadow">
+              <div class="card-body">
+                  <h2 class="card-title text-center">Register</h2>
+                  <form class="mt-4" action="{{ url_for('patients.register') }}" method="post">
+                      {{ form.hidden_tag() }}
+                        {% macro render_field(field) %}
+                            <div class="mb-3">
+                                {{ field.label(class="form-label") }}
+                                {{ field(class="form-control", placeholder=field.label.text) }}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback" style="display: block;">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endmacro %}
+
+                        {{ render_field(form.firstname) }}
+                        {{ render_field(form.lastname) }}
+                        {{ render_field(form.email) }}
+                        {{ render_field(form.password) }}
+                        {{ render_field(form.password2) }}
+                        {{ render_field(form.companyname) }}
+                        {{ render_field(form.streetaddress) }}
+                        {{ render_field(form.city) }}
+                        {{ render_field(form.stateregion) }}
+                        {{ render_field(form.zipcode) }}
+                        {{ render_field(form.country) }}
+                        {{ render_field(form.phonenumber) }}
+
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

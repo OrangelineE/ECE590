@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">Add Medication</h1>
+    <p class="text-center">Set reminders for your medication schedule.</p>
+
+    <form id="medication-form" method="post" action="/save-medication-schedule" class="mt-4">
+        <div class="medication-configurations">
+            {% for i in range(1, 6) %}
+            <div class="mb-3">
+                <label for="slot-{{ i }}" class="form-label">Slot {{ i }} Medication:</label>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="slot-{{ i }}">Pill Name</label>
+                    <input type="text" class="form-control" id="slot-{{ i }}" name="slot-{{ i }}" placeholder="Medication name" required>
+                </div>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="doses-{{ i }}">Doses Per Day</label>
+                    <input type="number" class="form-control" id="doses-{{ i }}" name="doses-{{ i }}" min="1" placeholder="Number of doses" required>
+                </div>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="pills-per-dose-{{ i }}">Pills Per Dose</label>
+                    <input type="number" class="form-control" id="pills-per-dose-{{ i }}" name="pills-per-dose-{{ i }}" min="1" placeholder="Pills per dose" required>
+                </div>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="time-{{ i }}">Time for First Dose</label>
+                    <input type="time" class="form-control" id="time-{{ i }}" name="time-{{ i }}" step="1200" placeholder="Time to take first dose" required>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Save Schedule</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

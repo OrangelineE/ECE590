@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Smart Pillbox{% endblock %}
+
+{% block navbar %}
+<!-- Navbar is inherited from base.html, modifications should be done in base.html if needed -->
+{% endblock %}
+
+{% block hero %}
+<div class="hero-section text-center">
+    <h1>Welcome to Our Smart Pillbox</h1>
+    <p>We provide innovative solutions for pill management.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <p>Ready to take control of your health?</p>
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <a href="{{ url_for('patients.login') }}" class="btn btn-primary btn-lg">Login</a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('patients.register') }}" class="btn btn-secondary btn-lg">Register</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">Manage Slots</h1>
+    <form id="slot-management-form" method="post">
+        {% for slot in slots %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Slot {{ slot.slot_id }}</h5>
+                <div class="mb-3">
+                    <label for="pill-name-{{ slot.slot_id }}">Pill Name:</label>
+                    <input type="text" class="form-control" id="pill-name-{{ slot.slot_id }}" name="pill-name-{{ slot.slot_id }}" value="{{ slot.pill_name }}">
+                </div>
+                <div class="mb-3">
+                    <label for="pill-count-{{ slot.slot_id }}">Pill Count:</label>
+                    <input type="number" class="form-control" id="pill-count-{{ slot.slot_id }}" name="pill-count-{{ slot.slot_id }}" value="{{ slot.pill_count }}">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

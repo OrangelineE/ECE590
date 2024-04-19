@@ -1,0 +1,11 @@
+FLASK_APP=pillbox.py
+FLASK_DEBUG=True
+FLASK_ENV=development
+FLASK_RUN_HOST=0.0.0.0
+FLASK_RUN_PORT=5000
+SECRET_KEY='u2fal2b8-ny18j-cpis1fim73tq02pg6v_rb_rays7_r7v4vu0'
+DB_NAME=ece590
+DB_USER=
+DB_PORT=
+DB_HOST=
+DB_PASSWORD=
