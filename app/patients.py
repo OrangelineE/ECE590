@@ -34,11 +34,11 @@ def login():
         patient = Patient.authenticate(form.email.data, form.password.data)
         if patient is None:
             flash('Invalid email or password')
-            return redirect(url_for('users.login'))
+            return redirect(url_for('patients.login'))
         login_user(patient)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('index.index')
+            next_page = url_for('index.dashboard')
 
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
@@ -46,7 +46,7 @@ def login():
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index.index'))
+        return redirect(url_for('index.dashboard'))
     form = RegistrationForm()
     if form.validate_on_submit():
         if Patient.register(
@@ -56,7 +56,7 @@ def register():
             age=form.age.data
         ):
             flash('Congratulations, you are now a registered patient!')
-            return redirect(url_for('users.login'))
+            return redirect(url_for('patients.login'))
     return render_template('register.html', title='Register', form=form)
 
 @bp.route('/logout')

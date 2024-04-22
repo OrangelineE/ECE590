@@ -1,90 +1,103 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from datetime import datetime, timedelta
 from flask_login import login_required, current_user
-
-# # Assuming you have models for Slots, Pills, and Reminders
-# from .models import Slot, Pill, Reminder
+from flask import request, flash, redirect, url_for, Blueprint, render_template, abort
+from .models.reminder import Reminder
+from flask import jsonify
+from .models.slot import Slot
+import traceback
 
 bp = Blueprint('reminders', __name__)
 
-# @bp.route('/add-reminder', methods=['GET', 'POST'])
-# # @login_required
-# def add_reminder():
-#     if request.method == 'POST':
-#         # Retrieve form data
-#         slot_data = request.form.getlist('slot')
-#         doses_data = request.form.getlist('doses')
-#         pills_per_dose_data = request.form.getlist('pills-per-dose')
-#         times_data = request.form.getlist('time')
+def get_user_slots():
+    # Assuming `get_boxes` returns a list of box objects for the current user
+    boxes = current_user.get_boxes()
+    # Initialize a list to hold all slots from the user's boxes
+    user_slots = []
+    # Iterate through each box and collect its slots with pill names
+    for box in boxes:
+        box_slots = Slot.get_all(box_id=box.box_id)
+        user_slots.extend(box_slots)
+    return user_slots
 
-#         # Assuming there are 5 slots for the pillbox
-#         for i in range(5):
-#             slot_id = int(slot_data[i])
-#             doses = int(doses_data[i])
-#             pills_per_dose = int(pills_per_dose_data[i])
-#             time = times_data[i]
 
-#             # Create or update the Reminder in the database
-#             # This is a simplistic approach; you'll need to adapt it to how your models and database are set up.
-#             # Error handling and data validation should also be implemented.
 
-#             # Fetch the Slot based on slot_id and current_user
-#             slot = Slot.query.filter_by(id=slot_id, user_id=current_user.id).first()
-            
-#             # Create a new reminder object and add it to the session
-#             # Here we are creating a single reminder for simplicity, but you might want to create multiple
-#             # based on the doses per day.
-#             reminder = Reminder(slot_id=slot.id, alarm_time=time, quantity=pills_per_dose)
-#             db.session.add(reminder)
+@bp.route('/add_reminder', methods=['POST'])
+@login_required
+def add_reminder():
+    try:
+        # Assume data is sent as JSON, parse it from request
+        data = request.get_json()
+        slot_id = data['slot_id']
+        alarm_time_str = data['alarm_time']
+        frequency_str = data['frequency']
+        quantity = int(data['quantity'])
         
-#         # Commit all reminders to the database
-#         db.session.commit()
+        # Parse the alarm time using datetime
+        alarm_time = datetime.strptime(alarm_time_str, '%Y-%m-%dT%H:%M:%S')  # Adjust the format if necessary
+
+        # Assuming Reminder.create() handles database interaction
+        reminder_id = Reminder.create(slot_id, alarm_time, frequency_str, quantity)
         
-#         flash('Reminders have been set successfully.', 'success')
-#         return redirect(url_for('index'))
-#     else:
-#         # GET request: Display the form
-#         slots = Slot.query.filter_by(user_id=current_user.id).all()
-#         return render_template('reminder.html', slots=slots)
+        # Return success response
+        return jsonify({
+            'status': 'success',
+            'message': f'Reminder added with ID {reminder_id}'
+        }), 200
+    except Exception as e:
+        # Log the full traceback to help debug the error
+        traceback.print_exc()
+        
+        # Return JSON error message
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to add reminder: {str(e)}'
+        }), 400
 
-# A mock function to simulate database query
-def mock_query_slots():
-    # Simulating slots with just IDs and names
-    return [{'id': i, 'name': f'Pill {i}'} for i in range(1, 6)]
 
-@bp.route('/reminder', methods=['GET', 'POST'])
-# @login_required
-def reminder():
-    if request.method == 'POST':
-        # Mock form data handling
-        slot_data = request.form.getlist('slot')
-        doses_data = request.form.getlist('doses')
-        pills_per_dose_data = request.form.getlist('pills-per-dose')
-        times_data = request.form.getlist('time')
 
-        reminders = []
+@bp.route('/delete_reminder/<int:reminder_id>', methods=['POST'])
+@login_required
+def delete_reminder(reminder_id):
+    try:
+        deleted = Reminder.delete(reminder_id)
+        if deleted:
+            flash('Reminder successfully deleted.', 'success')
+        else:
+            flash('Reminder could not be deleted.', 'warning')
+    except Exception as e:
+        flash(f"Error deleting reminder: {str(e)}", 'danger')
+    
+    return redirect(url_for('reminders.display_reminders'))
 
-        for i in range(len(slot_data)):
-            reminders.append({
-                'slot_id': slot_data[i],
-                'doses': doses_data[i],
-                'pills_per_dose': pills_per_dose_data[i],
-                'time': times_data[i]
-            })
+@bp.route('/display_reminders')
+@login_required
+def display_reminders():
+    reminders = Reminder.get_by_user_id(current_user.patient_id)
+    slots = get_user_slots()  # Use the revised function to get slots
+    # print(slots)
+    # print(reminders)
+    return render_template('reminder.html', reminders=reminders, slot_info=slots)
 
-        # Normally, you would commit to the database here, but instead, we'll just print or flash the reminders
-        for reminder in reminders:
-            print(reminder)  # or use flash(f"Reminder for slot {reminder['slot_id']} added.", 'info')
-
-        flash('Reminders have been set successfully.', 'success')
-        return redirect(url_for('index.index'))
+@bp.app_template_filter('dateformat')
+def dateformat(value, format='%H:%M / %d-%m-%Y'):
+    """Format a date string to the given format."""
+    if value is None:
+        return ""
+    try:
+        # If the value is a string, parse it to datetime
+        if isinstance(value, str):
+            value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
+        # Now format the datetime object
+        return value.strftime(format)
+    except ValueError:
+        # If there is an error parsing the string, return it as is
+        return value
+    
+@bp.app_template_filter('to_hours')
+def to_hours(td):
+    if isinstance(td, timedelta):
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        return f"{hours} hours"
     else:
-        # GET request: Display the form
-        slots = mock_query_slots()
-        return render_template('reminder.html', slots=slots)
-
-# Add mock session handling if you want to keep track of reminders in the session
-@bp.route('/clear-reminders', methods=['POST'])
-def clear_reminders():
-    bp.session.pop('reminders', None)
-    flash('All reminders have been cleared.', 'success')
-    return redirect(url_for('index.index'))
+        return "Invalid duration"

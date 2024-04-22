@@ -1,6 +1,7 @@
 from flask import current_app as app
 from sqlalchemy import text
 from sqlalchemy.orm import scoped_session, sessionmaker
+from .box import Box
 
 class Patient:
     def __init__(self, patient_id, email, name, password, age):
@@ -22,6 +23,9 @@ class Patient:
 
     def is_anonymous(self):
         return False
+    
+    def get_boxes(self):
+        return Box.get_by_patient_id(self.patient_id)
 
     @staticmethod
     def create(email, name, password, age):

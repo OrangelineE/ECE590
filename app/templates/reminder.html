@@ -1,38 +1,107 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="container my-5">
-    <h1 class="text-center">Add Medication</h1>
-    <p class="text-center">Set reminders for your medication schedule.</p>
-
-    <form id="medication-form" method="post" action="/save-medication-schedule" class="mt-4">
-        <div class="medication-configurations">
-            {% for i in range(1, 6) %}
-            <div class="mb-3">
-                <label for="slot-{{ i }}" class="form-label">Slot {{ i }} Medication:</label>
-                <div class="input-group mb-3">
-                    <label class="input-group-text" for="slot-{{ i }}">Pill Name</label>
-                    <input type="text" class="form-control" id="slot-{{ i }}" name="slot-{{ i }}" placeholder="Medication name" required>
+<div class="container mt-4">
+    <div class="row">
+        {% for slot in slot_info %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Slot {{ slot.s_slotid }}
                 </div>
-                <div class="input-group mb-3">
-                    <label class="input-group-text" for="doses-{{ i }}">Doses Per Day</label>
-                    <input type="number" class="form-control" id="doses-{{ i }}" name="doses-{{ i }}" min="1" placeholder="Number of doses" required>
-                </div>
-                <div class="input-group mb-3">
-                    <label class="input-group-text" for="pills-per-dose-{{ i }}">Pills Per Dose</label>
-                    <input type="number" class="form-control" id="pills-per-dose-{{ i }}" name="pills-per-dose-{{ i }}" min="1" placeholder="Pills per dose" required>
-                </div>
-                <div class="input-group mb-3">
-                    <label class="input-group-text" for="time-{{ i }}">Time for First Dose</label>
-                    <input type="time" class="form-control" id="time-{{ i }}" name="time-{{ i }}" step="1200" placeholder="Time to take first dose" required>
+                <ul class="list-group list-group-flush">
+                    {% set slot_reminders = reminders.get(slot.s_slotid, None) %}
+                    {% if slot_reminders %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Quantity</th>
+                                <th>Alarm Time</th>
+                                <th>Frequency</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reminder in slot_reminders %}
+                            <tr>
+                                <td>{{ reminder.quantity }} pills</td>
+                                <td>
+                                    {% if reminder.alarm_time %}
+                                        {{ reminder.alarm_time | dateformat('%H:%M') }}
+                                    {% else %}
+                                        Not set
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if reminder.frequency %}
+                                        {{ reminder.frequency | to_hours }}
+                                    {% else %}
+                                        Not set
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('reminders.delete_reminder', reminder_id=reminder.reminder_id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <li class="list-group-item">No reminders set for this slot</li>
+                    {% endif %}
+                </ul>
+                
+                <div class="card-body">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reminderModal-{{ slot.s_slotid }}">Add Reminder</button>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-        
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary">Save Schedule</button>
-        </div>
-    </form>
-</div>
+
+            <!-- Modal for Adding/Editing Reminders -->
+            <div class="modal fade" id="reminderModal-{{ slot.s_slotid }}" tabindex="-1" aria-labelledby="reminderModalLabel-{{ slot.s_slotid }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="reminderModalLabel-{{ slot.s_slotid }}">New Reminder for Slot {{ slot.s_slotid }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="reminderForm-{{ slot.s_slotid }}">
+                                <div class="mb-3">
+                                    <label for="pillName-{{ slot.s_slotid }}" class="form-label">Pill Name</label>
+                                    <input type="text" class="form-control" id="pillName-{{ slot.s_slotid }}" value="{{ slot.pillname }}" readonly required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="quantity-{{ slot.s_slotid }}" class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="quantity-{{ slot.s_slotid }}" name="quantity" min="1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="frequency-{{ slot.s_slotid }}" class="form-label">Frequency</label>
+                                    <select class="form-select" id="frequency-{{ slot.s_slotid }}" name="frequency" required>
+                                        <option value="8 hours">Every 8 hours</option>
+                                        <option value="12 hours">Every 12 hours</option>
+                                        <option value="1 day">Once a day</option>
+                                        <option value="2 days">Every 2 days</option>
+                                        <!-- Add more options as necessary -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="time-{{ slot.s_slotid }}" class="form-label">Time</label>
+                                    <input type="time" class="form-control" id="time-{{ slot.s_slotid }}" required>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="saveReminderButton-{{ slot.s_slotid }}">Save Reminder</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- This ends the col-md-4 div -->
+        {% endfor %}
+    </div> <!-- This ends the row div -->
+</div> <!-- This ends the container div -->
 {% endblock %}
+<script src="{{ url_for('static', filename='js/reminderScript.js') }}"></script>

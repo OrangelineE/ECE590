@@ -73,10 +73,6 @@
     font-size: 1rem;
   }
 </style>
-
-    
-    
-    
     <div class="login-container">
       <form class="login-form" action="" method="post">
           <h1>Login</h1>
@@ -114,8 +110,8 @@
               <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
           </div>
-          <p>
-            {% with messages = get_flashed_messages() %}
+           <p>
+            <!-- {% with messages = get_flashed_messages() %}
               {% if messages %}
               <ul class="flashed-messages">
                 {% for message in messages %}
@@ -123,8 +119,8 @@
                 {% endfor %}
               </ul>
               {% endif %}
-            {% endwith %}
-          </p>
+            {% endwith %} -->
+          </p> 
       
           {{ form.submit(class_="btn btn-primary") }}
           <div class="signup-link-container">

@@ -7,14 +7,14 @@
         {% for slot in slots %}
         <div class="card mb-3">
             <div class="card-body">
-                <h5 class="card-title">Slot {{ slot.slot_id }}</h5>
+                <h5 class="card-title">Slot {{ slot.s_slotid }}</h5>
                 <div class="mb-3">
-                    <label for="pill-name-{{ slot.slot_id }}">Pill Name:</label>
-                    <input type="text" class="form-control" id="pill-name-{{ slot.slot_id }}" name="pill-name-{{ slot.slot_id }}" value="{{ slot.pill_name }}">
+                    <label for="pill-name-{{ slot.s_slotid }}">Pill Name:</label>
+                    <input type="text" class="form-control" id="pill-name-{{ slot.s_slotid }}" name="pill-name-{{ slot.s_slotid }}" value="{{ slot.pillname }}">
                 </div>
                 <div class="mb-3">
-                    <label for="pill-count-{{ slot.slot_id }}">Pill Count:</label>
-                    <input type="number" class="form-control" id="pill-count-{{ slot.slot_id }}" name="pill-count-{{ slot.slot_id }}" value="{{ slot.pill_count }}">
+                    <label for="pill-count-{{ slot.s_slotid }}">Pill Count:</label>
+                    <input type="number" class="form-control" id="pill-count-{{ slot.s_slotid }}" name="pill-count-{{ slot.s_slotid }}" value="{{ slot.s_pillnum }}">
                 </div>
             </div>
         </div>
