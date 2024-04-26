@@ -5,18 +5,38 @@ import atexit
 import logging
 import time
 from datetime import datetime, timedelta
-from flask_login import current_user
+from flask_login import current_user, login_required
 from .models.reminder import Reminder
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 from .models.reminder import Reminder
+from flask import current_app
+from .models.patient import Patient
+import os
 
-
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 MQTT_BROKER_URL = 'broker.emqx.io'
 MQTT_BROKER_PORT = 1883
 MQTT_TOPIC = 'ECE590_Final_Project_G2/S1/'
+
+def setup_scheduler(app):
+    if os.environ.get("SCHEDULER_RUNNING"):
+        logging.warning("Scheduler already running.")
+        return
+
+    scheduler = BackgroundScheduler()
+
+    def job_function():
+        logging.info("Job function is running...")
+        with app.app_context():
+            check_and_send_reminders()
+
+    job = scheduler.add_job(func=job_function, trigger='interval', minutes=1, id='unique_job_id')
+    scheduler.start()
+    os.environ["SCHEDULER_RUNNING"] = "True"
+
+    logging.info(f"Job {job.id} scheduled to run every {job.trigger.interval_length} seconds.")
 
 def remove_past_reminders():
     current_time = datetime.now()
@@ -32,80 +52,65 @@ def on_connect(client, userdata, flags, rc):
 def on_publish(client, userdata, mid):
     logging.info(f"Message {mid} has been published.")
 
-def send_mqtt_message(slot_data):
+client = None  # Define this at a higher scope, such as module level
 
-    try:
-        unacked_publish = set()
+def get_mqtt_client():
+    global client
+    if client is None or not client.is_connected():
         client = mqtt.Client(protocol=mqtt.MQTTv311)
-
         client.on_connect = on_connect
         client.on_publish = on_publish
         client.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)
         client.loop_start()
+    return client
 
+def send_mqtt_message(slot_data):
+    try:
+        client = get_mqtt_client()
         payload = json.dumps(slot_data)
-        
-        # Publish and keep track of the returned message info
         msg_info = client.publish(MQTT_TOPIC, payload, qos=1)
-        unacked_publish.add(msg_info.mid)  # Keep track of the message ID
-        
-        # Wait for the message to be published
         msg_info.wait_for_publish()
-        
-        # Check for any unacknowledged publishes due to race conditions
-        while unacked_publish:
-            time.sleep(0.1)
-            unacked_publish.discard(msg_info.mid)  # Safely remove the acknowledged mid
-
-        logging.info("All messages have been published and acknowledged.")
-
+        logging.info("Message published successfully.")
     except Exception as e:
         logging.error(f"Failed to publish to MQTT broker: {e}")
     finally:
-        if client is not None:
-            client.loop_stop()
-            client.disconnect()
-
+        client.loop_stop()  # Consider when and how to stop the loop appropriately
+        client.disconnect()
 
 def check_and_send_reminders():
-    logging.info("Checking reminders...")
+    logging.info("Checking reminders for all users...")
     remove_past_reminders()
     current_time = datetime.now()
+    
+    all_patients = Patient.get_all_patients()  # Ensure this is correctly fetching all patient objects
+    if not all_patients:
+        logging.warning("No patients found. Skipping reminder checks.")
+        return
 
-    # Check if a user is logged in and authenticated
-    if current_user and current_user.is_authenticated:
-        reminders = Reminder.get_by_user_id(current_user.patient_id)
-
+    for patient in all_patients:
+        user_reminders = Reminder.get_by_user_id(patient.patient_id)
         slot_data = {f"Slot{i+1}": False for i in range(5)}  # Assuming 5 slots
         pill_data = {f"PillNum{i+1}": 0 for i in range(5)}
 
-        # Flag to track if any reminders are due
-        send_message = False
+        send_message = False  # Flag to track if any reminders are due
 
-        for reminder in reminders:
-            if reminder.alarm_time - timedelta(minutes=1) <= current_time <= reminder.alarm_time:
-                slot_data[f"Slot{reminder.slot_id}"] = True
-                pill_data[f"PillNum{reminder.slot_id}"] = reminder.quantity
-                send_message = True  # Set the flag since we have a reminder due
+        if not user_reminders:
+            logging.info(f"No reminders for user {patient.patient_id}")
+            continue
 
-        # Only send message if at least one reminder is due
+        for slot_id, reminders in user_reminders.items():
+            if reminders is not None:
+                for reminder in reminders:
+                    # Convert reminder['alarm_time'] from string to datetime
+                    reminder_alarm_time = datetime.strptime(reminder['alarm_time'], '%Y-%m-%dT%H:%M:%S')
+                    if reminder_alarm_time - timedelta(minutes=1) <= current_time < reminder_alarm_time:
+                        slot_data[f"Slot{reminder['slot_id']}"] = True
+                        pill_data[f"PillNum{reminder['slot_id']}"] = reminder['quantity']
+                        send_message = True
+
         if send_message:
             payload = {**slot_data, **pill_data}
+            print(payload) 
             send_mqtt_message(payload)
             logging.info("Reminder sent successfully.")
-        else:
-            logging.info("No reminders due at this time.")
-    else:
-        logging.warning("No user logged in or user is not authenticated. Skipping reminder check.")
 
-def setup_scheduler(app):
-    scheduler = BackgroundScheduler()
-
-    def job_function():
-        with app.app_context():
-            check_and_send_reminders()
-
-    scheduler.add_job(func=job_function, trigger='interval', minutes=1)
-    scheduler.start()
-
-    atexit.register(lambda: scheduler.shutdown(wait=False))

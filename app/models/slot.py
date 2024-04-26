@@ -1,5 +1,5 @@
 from flask import current_app as app
-from .pill import Pill  # Correct import as per your project structure
+from .pill import Pill  
 
 class Slot:
     def __init__(self, slot_id, box_id, pill_id=None, pill_count=0, pill_name=''):
@@ -67,16 +67,22 @@ class Slot:
     
     @staticmethod
     def update_slot(slot_id, pill_name, pill_count):
-        pill_id = Pill.get_id_by_name(pill_name) if pill_name else None
-        if pill_name and not pill_id:
-        # Insert new pill into the pill table and retrieve the new pill_id
-            pill_id = Pill.create_new_pill(pill_name)
-    
-        # Now update the slot with the pill_id and pill_count
-        sql = '''
-            UPDATE slots
-            SET s_pillid = :pill_id, s_pillnum = :pill_count
-            WHERE s_slotid = :slot_id
-        '''
-        app.db.execute(sql, slot_id=slot_id, pill_id=pill_id, pill_count=pill_count)
-        app.db.commit()
+        try:
+            pill_id = Pill.get_id_by_name(pill_name) if pill_name else None
+            if pill_name and not pill_id:
+                # Insert new pill into the pill table and retrieve the new pill_id
+                pill_id = Pill.create_new_pill(pill_name)
+
+            # Now update the slot with the pill_id and pill_count
+            sql = '''
+                UPDATE slots
+                SET s_pillid = :pill_id, s_pillnum = :pill_count
+                WHERE s_slotid = :slot_id
+            '''
+            result = app.db.execute(sql, slot_id=slot_id, pill_id=pill_id, pill_count=pill_count)
+            app.db.commit()
+            return True, "Update successful."
+        except Exception as e:
+            app.db.rollback()  # Rollback in case of error
+            return False, f"Update failed: {e}"
+

@@ -61,9 +61,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for slot_id in slot_reminders %}
-                                    {% if slot_reminders[slot_id] %}
-                                        {% for reminder in slot_reminders[slot_id] %}
+                                {% for slot in slots %}
+                                    {% if reminders_list[slot.slot_id] %}
+                                        {% for reminder in reminders_list[slot.slot_id] %}
                                             <tr>
                                                 <td>{{ loop.index }}</td>
                                                 <td>Slot {{ reminder['slot_id'] }}</td>
@@ -73,7 +73,7 @@
                                         {% endfor %}
                                     {% else %}
                                         <tr>
-                                            <td colspan="4" class="text-center">No reminders set for Slot {{ slot_id }}</td>
+                                            <td colspan="4" class="text-center">No reminders set for Slot {{ slot.slot_id }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}

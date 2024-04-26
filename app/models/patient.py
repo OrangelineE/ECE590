@@ -11,7 +11,6 @@ class Patient:
         self.password = password
         self.age = age
 
-    # Define methods required by Flask-Login
     def get_id(self):
         return str(self.patient_id)
 
@@ -86,3 +85,20 @@ class Patient:
             return Patient(*row)
         else:
             return None
+    
+    @staticmethod
+    def email_exists(email):
+        sql = "SELECT * FROM patients WHERE p_email = :email"
+        result = app.db.execute(sql, email=email)
+        return result.fetchone() is not None
+    
+    @staticmethod
+    def register(email, password, name, age):
+        patient_id = Patient.create(email, name, password, age)
+        return patient_id
+
+    @staticmethod
+    def get_all_patients():
+        sql = "SELECT p_patientid, p_email, p_name, p_password, p_age FROM patients"
+        result = app.db.execute(sql)
+        return [Patient(*row) for row in result.fetchall()] if result else []

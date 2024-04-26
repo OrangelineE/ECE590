@@ -1,5 +1,5 @@
 from flask import current_app as app
-
+from sqlalchemy import text
 class Reminder:
     def __init__(self, reminder_id, slot_id, alarm_time, frequency, quantity):
         self.reminder_id = reminder_id
@@ -50,16 +50,19 @@ class Reminder:
     @staticmethod
     def delete(reminder_id):
         try:
-            sql = '''
+            # Prepare your SQL statement wrapped in text() for SQLAlchemy processing
+            sql = text('''
                 DELETE FROM reminders
                 WHERE r_reminderid = :reminder_id
-            '''
-            result = app.db.execute(sql, reminder_id=reminder_id)
-            app.db.session.commit()
+            ''')
+
+            # Execute the SQL statement with a named placeholder
+            result = app.db.session.execute(sql, {'reminder_id': reminder_id})
+            app.db.session.commit()  # Commit the transaction to finalize the deletion
             return result.rowcount  # Return the number of rows affected
         except Exception as e:
-            app.db.session.rollback()
-            app.logger.error(f"Error deleting reminder: {e}")  # Improved error logging
+            app.db.session.rollback()  # Roll back the transaction on error
+            app.logger.error(f"Error deleting reminder: {e}")
             return 0
 
     @staticmethod

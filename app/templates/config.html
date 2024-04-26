@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container my-5" style="position: relative;">
+    
     <h1 class="text-center">Manage Slots</h1>
-    <form id="slot-management-form" method="post">
+    <form id="slot-management-form" method="post" style="position: relative; z-index: 2;">
+        <div class="text-center" style="margin-bottom: 48px;">
+            <img src="{{ url_for('static', filename='images/slots.png') }}" alt="Slots Layout" style="width: 700px; height: auto;" />
+        </div>
         {% for slot in slots %}
         <div class="card mb-3">
             <div class="card-body">
@@ -21,5 +25,15 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Save Changes</button>
     </form>
+    <!-- Background image container -->
+    <div class="slots-background"></div>
 </div>
+{% endblock %}
+{% block styles %}
+<style>
+  .fixed-size-image {
+    width: 700px; /* Set the desired width */
+    height: auto; /* Set height to auto to maintain aspect ratio */
+  }
+</style>
 {% endblock %}

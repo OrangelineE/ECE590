@@ -7,8 +7,6 @@ bp = Blueprint('index', __name__)
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
-    reminders = Reminder.get_by_user_id(current_user.patient_id)
-    print(reminders)
     return render_template('index.html')
 
 @bp.route('/dashboard', methods=['GET'])
@@ -24,8 +22,8 @@ def dashboard():
     for box in boxes:
         box_slots = Slot.get_all(box_id=box.box_id)
         slots.extend(box_slots)
-    print(slots)
+    # print(slots)
     reminders = Reminder.get_by_user_id(current_user.patient_id)
-    print(reminders)
+    # print(reminders)
     # Pass the collected slots to the template
     return render_template('dashboard.html', slots=slots, reminders_list=reminders)
